@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Modelos LLM explicados · IA Radar</title>
+  <meta name="description" content="Qué es un LLM, en qué se diferencian GPT, Claude, Gemini y Llama, y cómo elegir el modelo adecuado según la ventana de contexto, la velocidad y la privacidad.">
+  <meta name="theme-color" content="#0b0b1a">
+  <link rel="canonical" href="https://www.iaradar.com/modelos-llm-explicados.html">
+  <meta property="og:type" content="article">
+  <meta property="article:published_time" content="2026-10-09T09:00:00+02:00">
+  <meta property="article:section" content="Modelos LLM">
+  <meta property="og:site_name" content="IA Radar">
+  <meta property="og:title" content="Modelos LLM explicados · IA Radar">
+  <meta property="og:description" content="Qué es un LLM, en qué se diferencian GPT, Claude, Gemini y Llama, y cómo elegir el modelo adecuado según la ventana de contexto, la velocidad y la privacidad.">
+  <meta property="og:url" content="https://www.iaradar.com/modelos-llm-explicados.html">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!--
+    ============================================================
+    1) CONSENT MODE v2 · debe ejecutarse ANTES de cualquier etiqueta de Google
+    Todo empieza denegado hasta que el usuario elige en el banner de cookies.
+    IMPORTANTE: para servir anuncios de Google en el EEE, Reino Unido y Suiza
+    es obligatorio un CMP certificado por Google e integrado con IAB TCF v2.2
+    (p. ej. "Privacidad y mensajes" de AdSense/Ad Manager, Cookiebot, Didomi,
+    Quantcast Choice). El banner propio de esta página es la interfaz base:
+    sustitúyelo por el CMP certificado o conéctalo a él antes de monetizar.
+    ============================================================
+  -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      functionality_storage: 'granted',
+      security_storage: 'granted',
+      wait_for_update: 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    gtag('set', 'url_passthrough', true);
+
+    // Cola de Google Publisher Tag (GPT). El script gpt.js se carga después del consentimiento.
+    window.googletag = window.googletag || { cmd: [] };
+  </script>
+
+  <!-- Preconexiones: fuentes y servidores de anuncios (mejoran LCP y la latencia de la primera subasta) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://securepubads.g.doubleclick.net" crossorigin>
+  <link rel="dns-prefetch" href="https://tpc.googlesyndication.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;500;600;700&display=swap">
+
+  <!-- Tailwind por CDN (solo para previsualizar; en producción compila el CSS con la CLI de Tailwind) -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    if (window.tailwind) tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink:   { 950: '#07071a', 900: '#0b0b1a', 850: '#10102a', 800: '#15153a', 700: '#22224f', 600: '#34346b' },
+            iris:  { 300: '#c4b5fd', 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed' },
+            azure: { 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6' },
+            mist:  { 100: '#ecebff', 300: '#b9b8dc', 400: '#8e8db8', 500: '#6b6a96' }
+          },
+          fontFamily: {
+            display: ['"Bricolage Grotesque"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            sans: ['Manrope', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root { color-scheme: dark; }
+    body { background: #0b0b1a; color: #ecebff; }
+    h1, h2, h3 { text-wrap: balance; }
+
+    /* ================================================================
+       ESPACIOS PUBLICITARIOS
+       .ad-wrap   = envoltorio con la etiqueta "Publicidad" (fuera del creativo)
+       .ad-box    = contenedor donde GPT pinta el anuncio. Su min-height está
+                    reservada al tamaño IAB más alto que puede servirse en
+                    cada breakpoint, así el anuncio no empuja el contenido (CLS = 0).
+       Los breakpoints coinciden con el sizeMapping de GPT (768 px y 1024 px).
+       ================================================================ */
+    .ad-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-inline: auto; max-width: 100%; }
+    .ad-label {
+      font-size: 10px; line-height: 12px; letter-spacing: .12em; text-transform: uppercase;
+      color: #6b6a96; user-select: none;
+    }
+    .ad-box {
+      position: relative; display: flex; align-items: center; justify-content: center;
+      max-width: 100%; overflow: hidden; border-radius: 6px;
+      background: repeating-linear-gradient(135deg, #10102a 0 12px, #12122f 12px 24px);
+      outline: 1px dashed #34346b; outline-offset: -1px;
+    }
+    .ad-box > .ad-ph { font-size: 11px; color: #6b6a96; text-align: center; pointer-events: none; }
+    .ad-wrap.is-filled .ad-box { background: transparent; outline: none; }
+    .ad-wrap.is-filled .ad-ph { display: none; }
+
+    /* Leaderboard bajo la navegación: 320x50 móvil · 728x90 desde 768 px */
+    .ad-box--leaderboard { width: 320px; min-height: 50px; }
+    @media (min-width: 768px) { .ad-box--leaderboard { width: 728px; min-height: 90px; } }
+
+    /* In-article / in-feed: 300x250 móvil · 336x280 o 300x250 desde 768 px */
+    .ad-box--inarticle { width: 300px; min-height: 250px; }
+    @media (min-width: 768px) { .ad-box--inarticle { width: 336px; min-height: 280px; } }
+
+    /* Sidebar: Half-Page 300x600 (o MPU 300x250), sticky, solo desde 1024 px */
+    .ad-box--sidebar { width: 300px; min-height: 600px; }
+
+    /* Anchor inferior móvil 320x50 */
+    .ad-anchor {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+      display: none; justify-content: center;
+      padding: 4px 0 calc(4px + env(safe-area-inset-bottom, 0px));
+      background: rgba(7, 7, 26, .96); border-top: 1px solid #22224f;
+      backdrop-filter: blur(6px);
+    }
+    .ad-box--anchor { width: 320px; height: 50px; }
+    @media (max-width: 767px) {
+      body.has-anchor .ad-anchor { display: flex; }
+      body.has-anchor { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+    }
+
+    /* Separación mínima entre anuncios y botones y enlaces para evitar clics accidentales */
+    .ad-gap { margin-block: 40px; }
+
+    .stars { position: relative; display: inline-block; line-height: 1; }
+    .stars-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; white-space: nowrap; color: #fbbf24; }
+    .stars-base { color: #34346b; }
+    :focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+
+    /* ================= TIPOGRAFÍA DEL ARTÍCULO ================= */
+    .prose-ia { font-size: 1.125rem; line-height: 1.75; color: #d6d5f2; }
+    .prose-ia > * + * { margin-top: 1.25em; }
+    .prose-ia .lead { font-size: 1.1875rem; color: #ecebff; }
+    .prose-ia h2 { font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif; font-weight: 800; font-size: 1.625rem; line-height: 1.2; color: #ecebff; margin-top: 2.2em; scroll-margin-top: 8rem; }
+    .prose-ia h3 { font-weight: 700; color: #ecebff; font-size: 1.25rem; line-height: 1.3; margin-top: 1.8em; }
+    .prose-ia .tools-box h3 { margin-top: 0; }
+    .prose-ia strong { color: #ecebff; font-weight: 700; }
+    .prose-ia a { color: #c4b5fd; text-decoration: underline; text-underline-offset: 3px; }
+    .prose-ia ul, .prose-ia ol { padding-left: 1.4em; }
+    .prose-ia ul { list-style: disc; } .prose-ia ol { list-style: decimal; }
+    .prose-ia li + li { margin-top: .6em; }
+    .prose-ia li::marker { color: #a78bfa; font-weight: 700; }
+    .prose-ia blockquote { border-left: 3px solid #8b5cf6; background: #10102a; border-radius: 0 12px 12px 0; padding: 1rem 1.25rem; color: #d6d5f2; }
+    .prose-ia .table-wrap { overflow-x: auto; border: 1px solid #22224f; border-radius: 14px; }
+    .prose-ia table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: .9375rem; line-height: 1.5; }
+    .prose-ia thead th { background: #15153a; color: #b9b8dc; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; text-align: left; padding: .75rem 1rem; }
+    .prose-ia tbody th, .prose-ia tbody td { padding: .875rem 1rem; vertical-align: top; border-top: 1px solid #22224f; text-align: left; }
+    .prose-ia tbody th { color: #ecebff; font-weight: 700; }
+    .prose-ia tbody td:last-child { color: #93c5fd; }
+    .prose-ia .tools-box { border: 1px solid #22224f; background: #10102a; border-radius: 16px; padding: 1.25rem; margin-block: 2rem; }
+    .prose-ia .tools-box ul { padding-left: 0; list-style: none; }
+    .prose-ia .tools-box li + li { margin-top: 0; }
+    .tool-row { display: flex; align-items: center; gap: .75rem; border: 1px solid #22224f; border-radius: 12px; padding: .75rem; background: #0b0b1a; line-height: 1.35; }
+    .tool-logo { display: flex; height: 2.5rem; width: 2.5rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 10px; color: #fff; font-weight: 800; }
+    .tool-cta { flex-shrink: 0; border-radius: 8px; background: linear-gradient(90deg, #7c3aed, #3b82f6); color: #fff !important; text-decoration: none !important; font-size: .8125rem; font-weight: 700; padding: .5rem .875rem; }
+    .toc a { display: block; color: #b9b8dc; } .toc a:hover, .toc a.is-active { color: #fff; }
+    .toc a.is-active { font-weight: 700; }
+
+    /* ================= PORTADAS DE ARTÍCULO (sin imágenes: cero peso y cero CLS) =================
+       Cuando tengas imágenes reales usa <img width="1200" height="675" loading="lazy"> dentro de .cover */
+    .cover { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 14px; isolation: isolate; }
+    .cover::before { content: ""; position: absolute; inset: 0; z-index: -1;
+      background-image: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 28px 28px; mask-image: linear-gradient(135deg, #000 10%, transparent 75%); }
+    .cover svg.cover-icon { position: absolute; right: 8%; bottom: 10%; width: 34%; height: auto; opacity: .9; }
+    .cover--guias         { background: radial-gradient(120% 90% at 85% 100%, #3b82f6 0%, transparent 55%), linear-gradient(135deg, #2e1065, #4c1d95); }
+    .cover--modelos-llm   { background: radial-gradient(120% 90% at 85% 100%, #db2777 0%, transparent 55%), linear-gradient(135deg, #1e1b4b, #6d28d9); }
+    .cover--productividad { background: radial-gradient(120% 90% at 85% 100%, #10b981 0%, transparent 55%), linear-gradient(135deg, #082f49, #1d4ed8); }
+    .cover--noticias      { background: radial-gradient(120% 90% at 85% 100%, #f59e0b 0%, transparent 55%), linear-gradient(135deg, #3b0764, #9d174d); }
+    .cat-dot--guias { background: #a78bfa; } .cat-dot--modelos-llm { background: #f472b6; }
+    .cat-dot--productividad { background: #34d399; } .cat-dot--noticias { background: #fbbf24; }
+    .post-card:hover .post-title { color: #c4b5fd; }
+    .rank { font-variant-numeric: tabular-nums; }
+    .cover--hero svg.cover-icon { width: 22%; right: 6%; bottom: 14%; }
+    /* Anuncio lateral 300x250 (MPU) */
+    .ad-box--mpu { width: 300px; min-height: 250px; }
+    /* Código en línea dentro de los artículos */
+    .prose-ia code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .875em; background: #15153a; border: 1px solid #22224f; border-radius: 6px; padding: .1em .4em; color: #c4b5fd; }
+    /* Páginas legales */
+    .prose-ia .fill { background: rgba(251, 191, 36, .14); color: #fcd34d; border-radius: 4px; padding: 0 .3em; font-weight: 600; }
+    .prose-ia tbody th, .prose-ia tbody td { overflow-wrap: anywhere; }
+    .legal-nav a[aria-current="page"] { background: rgba(139, 92, 246, .15); color: #fff; }
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "Modelos LLM explicados para principiantes: de GPT-4 a Claude",
+      "description": "Qué es un LLM, en qué se diferencian GPT, Claude, Gemini y Llama, y cómo elegir el modelo adecuado según la ventana de contexto, la velocidad y la privacidad.",
+      "inLanguage": "es",
+      "datePublished": "2026-10-09",
+      "dateModified": "2026-10-09",
+      "articleSection": "Modelos LLM",
+      "keywords": "llm, claude, gpt, gemini",
+      "author": {
+        "@type": "Organization",
+        "name": "Equipo IA Radar",
+        "url": "https://www.iaradar.com/contacto.html#sobre-nosotros"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "IA Radar",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.iaradar.com/logo.png"
+        }
+      },
+      "mainEntityOfPage": "https://www.iaradar.com/modelos-llm-explicados.html"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Inicio",
+          "item": "https://www.iaradar.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Modelos LLM",
+          "item": "https://www.iaradar.com/?cat=modelos-llm"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Modelos LLM explicados"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+</head>
+<body class="font-sans antialiased bg-ink-900 text-mist-100">
+
+  <a href="#contenido" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 bg-iris-600 text-white px-3 py-2 rounded">Saltar al contenido</a>
+
+  <!-- ============ HEADER ============ -->
+  <header class="sticky top-0 z-40 border-b border-ink-700/70 bg-ink-900/85 backdrop-blur" style="top: env(safe-area-inset-top, 0px)">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex h-16 items-center gap-3 sm:gap-6">
+        <a href="index.html" class="flex shrink-0 items-center gap-2" aria-label="IA Radar, inicio">
+          <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+            <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>
+            <rect width="32" height="32" rx="9" fill="url(#lg)"/>
+            <circle cx="16" cy="16" r="9" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/>
+            <circle cx="16" cy="16" r="4.5" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.5"/>
+            <path d="M16 16 L24 9" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="1.8" fill="#fff"/>
+          </svg>
+          <span class="font-display text-xl font-extrabold tracking-tight">IA <span class="text-iris-400">Radar</span></span>
+        </a>
+
+        <!-- Buscador: en la portada filtra al escribir; en el resto de páginas envía a la portada -->
+        <form action="index.html" method="get" role="search" class="relative hidden flex-1 md:block">
+          <label for="search-header" class="sr-only">Buscar artículos</label>
+          <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mist-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="search-header" name="q" type="search" data-search placeholder="Buscar guías, modelos, noticias…" autocomplete="off"
+            class="w-full max-w-md rounded-xl border border-ink-700 bg-ink-850 py-2 pl-9 pr-3 text-sm text-mist-100 placeholder:text-mist-500 focus:border-iris-500 focus:outline-none focus:ring-2 focus:ring-iris-500/30">
+        </form>
+
+        <div class="ml-auto flex items-center gap-2">
+          <a href="#newsletter" class="hidden rounded-xl bg-gradient-to-r from-iris-600 to-azure-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-iris-600/20 transition hover:brightness-110 sm:inline-flex">Suscríbete gratis</a>
+          <button id="menu-btn" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-ink-700 md:hidden" aria-expanded="false" aria-controls="mobile-menu" aria-label="Abrir menú">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <nav aria-label="Categorías" class="hidden h-11 items-center gap-1 overflow-x-auto text-sm md:flex">
+        <a href="index.html" class="rounded-lg px-3 py-1.5 hover:bg-ink-800 hover:text-white text-mist-300">Inicio</a>
+        <a href="index.html?cat=guias#publicaciones" data-cat="Guías" class="rounded-lg px-3 py-1.5 hover:bg-ink-800 hover:text-white text-mist-300">Guías</a>
+        <a href="index.html?cat=modelos-llm#publicaciones" data-cat="Modelos LLM" aria-current="page" class="rounded-lg px-3 py-1.5 hover:bg-ink-800 hover:text-white text-white">Modelos LLM</a>
+        <a href="index.html?cat=productividad#publicaciones" data-cat="Productividad" class="rounded-lg px-3 py-1.5 hover:bg-ink-800 hover:text-white text-mist-300">Productividad</a>
+        <a href="index.html?cat=noticias#publicaciones" data-cat="Noticias" class="rounded-lg px-3 py-1.5 hover:bg-ink-800 hover:text-white text-mist-300">Noticias</a>
+        <span class="mx-2 h-4 w-px bg-ink-700"></span>
+        <a href="index.html#mas-leidos" class="rounded-lg px-3 py-1.5 text-mist-300 hover:bg-ink-800 hover:text-white">Más leídos</a>
+        <a href="contacto.html#sobre-nosotros" class="rounded-lg px-3 py-1.5 text-mist-300 hover:bg-ink-800 hover:text-white">Sobre Nosotros</a>
+      </nav>
+    </div>
+
+    <div id="mobile-menu" class="hidden border-t border-ink-700 bg-ink-900 px-4 pb-4 md:hidden">
+      <form action="index.html" method="get" role="search" class="mt-3">
+        <label for="search-mobile" class="sr-only">Buscar artículos</label>
+        <input id="search-mobile" name="q" type="search" data-search placeholder="Buscar artículos…" autocomplete="off"
+          class="w-full rounded-xl border border-ink-700 bg-ink-850 px-3 py-2.5 text-sm placeholder:text-mist-500 focus:border-iris-500 focus:outline-none">
+      </form>
+      <nav aria-label="Categorías (móvil)" class="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <a href="index.html" class="rounded-lg bg-ink-850 px-3 py-2 text-mist-300">Inicio</a>
+        <a href="index.html?cat=guias#publicaciones" data-cat="Guías" class="rounded-lg bg-ink-850 px-3 py-2 text-mist-300">Guías</a>
+        <a href="index.html?cat=modelos-llm#publicaciones" data-cat="Modelos LLM" aria-current="page" class="rounded-lg bg-ink-850 px-3 py-2 text-white">Modelos LLM</a>
+        <a href="index.html?cat=productividad#publicaciones" data-cat="Productividad" class="rounded-lg bg-ink-850 px-3 py-2 text-mist-300">Productividad</a>
+        <a href="index.html?cat=noticias#publicaciones" data-cat="Noticias" class="rounded-lg bg-ink-850 px-3 py-2 text-mist-300">Noticias</a>
+        <a href="index.html#mas-leidos" class="rounded-lg bg-ink-850 px-3 py-2 text-mist-300">Más leídos</a>
+        <a href="contacto.html#sobre-nosotros" class="rounded-lg bg-ink-850 px-3 py-2 text-mist-300">Sobre Nosotros</a>
+        <a href="contacto.html" class="rounded-lg bg-ink-850 px-3 py-2 text-mist-300">Contacto</a>
+      </nav>
+    </div>
+  </header>
+  <!-- ============ ANUNCIO 1 · LEADERBOARD bajo la cabecera ============
+       GAM: /1234567/iaradar/leaderboard · 728x90 (≥768 px) / 320x50 (móvil) -->
+  <div class="px-4 pt-4">
+    <div class="ad-wrap" data-ad-wrap>
+      <span class="ad-label">Publicidad</span>
+      <div id="ad-leaderboard" class="ad-box ad-box--leaderboard" data-ad-type="leaderboard" data-ad-unit="leaderboard" role="complementary" aria-label="Anuncio">
+        <span class="ad-ph">728 × 90 · 320 × 50</span>
+      </div>
+    </div>
+  </div>
+
+  <main id="contenido" class="mx-auto max-w-7xl px-4 pb-4 pt-8 sm:px-6">
+    <nav aria-label="Ruta de navegación" class="text-xs text-mist-500">
+      <ol class="flex flex-wrap items-center gap-1.5">
+        <li><a href="index.html" class="hover:text-mist-300">Inicio</a></li>
+        <li aria-hidden="true">/</li>
+        <li><a href="index.html?cat=modelos-llm#publicaciones" class="hover:text-mist-300">Modelos LLM</a></li>
+        <li aria-hidden="true">/</li>
+        <li class="text-mist-400" aria-current="page">Modelos LLM explicados</li>
+      </ol>
+    </nav>
+
+    <div class="mt-6 grid gap-12 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <article class="min-w-0">
+        <!-- ============ CABECERA DEL ARTÍCULO ============ -->
+        <header class="max-w-[42rem]">
+          <a href="index.html?cat=modelos-llm#publicaciones" class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-mist-300 hover:text-white">
+            <span class="cat-dot--modelos-llm h-1.5 w-1.5 rounded-full"></span>Modelos LLM
+          </a>
+          <h1 class="mt-3 font-display text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">Modelos LLM explicados para principiantes: de GPT-4 a Claude</h1>
+          <p class="mt-4 text-lg text-mist-300">Qué es un LLM, en qué se diferencian GPT, Claude, Gemini y Llama, y cómo elegir el modelo adecuado según la ventana de contexto, la velocidad y la privacidad.</p>
+          <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-ink-700 py-3 text-sm text-mist-400">
+            <span class="flex items-center gap-2">
+              <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-iris-600 to-azure-500 text-xs font-bold text-white" aria-hidden="true">IA</span>
+              <span>Por <strong class="font-semibold text-mist-100">Equipo IA Radar</strong></span>
+            </span>
+            <span aria-hidden="true">·</span>
+            <time datetime="2026-10-09">9 de octubre de 2026</time>
+            <span aria-hidden="true">·</span>
+            <span>6 min de lectura</span>
+          </div>
+        </header>
+
+        <!-- Índice (móvil y tablet; en escritorio está en la barra lateral) -->
+        <details class="mt-8 max-w-[42rem] rounded-xl border border-ink-700 bg-ink-850 p-4 lg:hidden">
+          <summary class="cursor-pointer text-sm font-semibold">Contenido del artículo</summary>
+          <ol class="toc mt-3 space-y-2 text-sm text-mist-300">
+              <li><a href="#que-es-un-llm" data-toc="que-es-un-llm">¿Qué es exactamente un Gran Modelo de Lenguaje (LLM)?</a></li>
+              <li><a href="#comparativa-modelos" data-toc="comparativa-modelos">Comparativa de los principales modelos del mercado</a></li>
+              <li><a href="#como-elegir" data-toc="como-elegir">Factores clave para elegir un LLM</a></li>
+              <li><a href="#agentes-ia" data-toc="agentes-ia">El futuro de los modelos: de chatbots a agentes autónomos</a></li>
+              <li><a href="#conclusion" data-toc="conclusion">Conclusión</a></li>
+          </ol>
+        </details>
+
+        <!-- ============ CUERPO DEL ARTÍCULO ============ -->
+        <div class="prose-ia mt-8 max-w-[42rem]">
+
+          <p class="lead">
+            En el ecosistema de la <strong>Inteligencia Artificial Generativa</strong>, el término <strong>LLM</strong> (<i lang="en">Large Language Model</i> o Gran Modelo de Lenguaje) se ha convertido en el centro de todas las conversaciones sobre tecnología y software. Sin embargo, para la mayoría de los usuarios no técnicos, entender la diferencia entre un modelo y otro (como GPT-4, Claude, Gemini o Llama) puede ser confuso.
+          </p>
+          <p>
+            En esta guía de <strong>IA Radar</strong>, explicamos de forma sencilla qué es un LLM, cómo se comparan las principales opciones del mercado y cómo elegir la herramienta adecuada para cada necesidad profesional.
+          </p>
+
+          <h2 id="que-es-un-llm">1. ¿Qué es exactamente un Gran Modelo de Lenguaje (LLM)?</h2>
+          <p>
+            Un <strong>LLM</strong> es un programa informático diseñado para procesar, comprender y generar lenguaje humano a gran escala. Estos modelos no «piensan» ni tienen conciencia; son gigantescas redes neuronales que han sido entrenadas leyendo miles de millones de textos en internet.
+          </p>
+          <p>
+            A partir de ese entrenamiento, el modelo adquiere una comprensión profunda de las reglas gramaticales, el contexto, los matices del lenguaje y el código informático.
+          </p>
+          <blockquote>
+            <p><strong>En resumen:</strong> si un buscador como Google te muestra <em>dónde</em> está la información, un LLM procesa esa información y te entrega la <em>respuesta sintetizada</em>.</p>
+          </blockquote>
+                <!-- ANUNCIO IN-ARTICLE 1 · GAM: /1234567/iaradar/art_inarticle_1 -->
+                <div class="ad-gap">
+                  <div class="ad-wrap " data-ad-wrap>
+                    <span class="ad-label">Publicidad</span>
+                    <div id="ad-inarticle-1" class="ad-box ad-box--inarticle" data-ad-type="inarticle" data-ad-unit="art_inarticle_1" role="complementary" aria-label="Anuncio">
+                      <span class="ad-ph">336 × 280 · 300 × 250</span>
+                    </div>
+                  </div>
+                </div>
+
+          <h2 id="comparativa-modelos">2. Comparativa de los principales modelos del mercado</h2>
+          <p>A continuación, analizamos las cuatro familias de modelos más potentes y utilizadas en la actualidad:</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th scope="col">Modelo</th><th scope="col">Desarrollador</th><th scope="col">Enfoque principal</th><th scope="col">Punto fuerte</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">GPT-4o / serie GPT</th><td>OpenAI</td><td>Uso general, razonamiento y visión</td><td>Integración con un ecosistema versátil y complementos.</td></tr>
+                <tr><th scope="row">Claude (Sonnet / Opus)</th><td>Anthropic</td><td>Redacción, análisis complejo y código</td><td>Respuestas más naturales, razonamiento lógico y lectura de contexto amplio.</td></tr>
+                <tr><th scope="row">Gemini</th><td>Google</td><td>Integración con herramientas de Google</td><td>Conexión directa con Workspace, YouTube y búsqueda en tiempo real.</td></tr>
+                <tr><th scope="row">Llama (open source)</th><td>Meta</td><td>Modelos de código abierto</td><td>Permite a los desarrolladores ejecutar la IA en sus propios servidores privados.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="como-elegir">3. Factores clave para elegir un LLM</h2>
+          <p>No todos los modelos funcionan igual para todas las tareas. Al evaluar un LLM para tu flujo de trabajo o empresa, debes considerar tres factores técnicos clave:</p>
+
+          <h3>A. Ventana de contexto (<i lang="en">context window</i>)</h3>
+          <p>La ventana de contexto mide la cantidad de información (texto, documentos o código) que el modelo puede «recordar» durante una misma conversación.</p>
+          <ul>
+            <li>Una ventana de contexto grande permite subir <strong>libros enteros o archivos PDF de cientos de páginas</strong> para que la IA los analice sin perder el hilo.</li>
+          </ul>
+
+          <h3>B. Capacidad de razonamiento frente a velocidad</h3>
+          <ul>
+            <li><strong>Modelos rápidos (Lite / Haiku / Flash):</strong> ideales para tareas sencillas como resumir correos, clasificar datos o responder preguntas frecuentes.</li>
+            <li><strong>Modelos avanzados (Opus / Pro / o1):</strong> diseñados para problemas matemáticos complejos, arquitectura de código o análisis financiero detallado.</li>
+          </ul>
+
+          <h3>C. Privacidad y seguridad de los datos</h3>
+          <p>Para empresas que manejan datos sensibles de clientes, es fundamental utilizar versiones de modelos que garanticen que <strong>la información no será utilizada para entrenar versiones futuras de la IA</strong>.</p>
+                <!-- ANUNCIO IN-ARTICLE 2 · GAM: /1234567/iaradar/art_inarticle_2 -->
+                <div class="ad-gap">
+                  <div class="ad-wrap " data-ad-wrap>
+                    <span class="ad-label">Publicidad</span>
+                    <div id="ad-inarticle-2" class="ad-box ad-box--inarticle" data-ad-type="inarticle" data-ad-unit="art_inarticle_2" role="complementary" aria-label="Anuncio">
+                      <span class="ad-ph">336 × 280 · 300 × 250</span>
+                    </div>
+                  </div>
+                </div>
+
+          <h2 id="agentes-ia">4. El futuro de los modelos: de chatbots a agentes autónomos</h2>
+          <p>La evolución de los LLM no se detiene en las interfaces de chat tradicionales. La nueva frontera de esta tecnología son los <strong>agentes de IA</strong>: sistemas capaces no solo de responder texto, sino de <strong>ejecutar acciones autónomas</strong> en la web.</p>
+          <p>Un agente de IA actual puede recibir una instrucción general como <em>«reserva una reunión con el cliente y envíale la presentación por correo»</em>, desglosarla en pasos y ejecutarla interactuando con diferentes programas de software sin supervisión constante.</p>
+
+          <h2 id="conclusion">Conclusión</h2>
+          <p>Conocer las fortalezas de cada modelo LLM permite seleccionar la herramienta correcta para cada tarea, optimizando tiempo y recursos. La clave en la era de la inteligencia artificial no es usar un solo modelo, sino saber combinar los mejores para cada necesidad.</p>
+        </div>
+
+        <!-- Etiquetas -->
+        <div class="mt-10 flex max-w-[42rem] flex-wrap gap-2 text-xs">
+          <a href="index.html?q=llm#publicaciones" class="rounded-md bg-ink-850 px-2 py-1 text-mist-400 hover:text-white">#llm</a> <a href="index.html?q=claude#publicaciones" class="rounded-md bg-ink-850 px-2 py-1 text-mist-400 hover:text-white">#claude</a> <a href="index.html?q=gpt#publicaciones" class="rounded-md bg-ink-850 px-2 py-1 text-mist-400 hover:text-white">#gpt</a> <a href="index.html?q=gemini#publicaciones" class="rounded-md bg-ink-850 px-2 py-1 text-mist-400 hover:text-white">#gemini</a>
+        </div>
+
+        <!-- Firma editorial (E-E-A-T) -->
+        <div class="mt-8 max-w-[42rem] rounded-2xl border border-ink-700 bg-ink-850 p-5">
+          <div class="flex items-start gap-4">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-iris-600 to-azure-500 text-sm font-bold text-white" aria-hidden="true">IA</span>
+            <div>
+              <p class="font-semibold">Publicado por el equipo editorial de IA Radar</p>
+              <p class="mt-1 text-sm text-mist-400">Guías y análisis técnico de inteligencia artificial y software. <a href="contacto.html#sobre-nosotros" class="text-iris-300 hover:text-iris-400">Quiénes somos</a></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ SIGUIENTE GUÍA ============ -->
+        <a href="guia-prompt-engineering.html" class="group mt-8 grid max-w-[42rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-2xl border border-iris-500/30 bg-gradient-to-br from-ink-800 to-ink-900 p-5 transition hover:border-iris-400">
+          <span class="min-w-0">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-iris-300">Siguiente guía</span>
+            <span class="mt-1 block font-display text-lg font-bold leading-snug group-hover:text-iris-300">Guía completa de Prompt Engineering: cómo escribir instrucciones efectivas para la IA en 2026</span>
+          </span>
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-iris-600 to-azure-500 text-white" aria-hidden="true">→</span>
+        </a>
+
+        <!-- ============ ARTÍCULOS RELACIONADOS ============ -->
+        <section class="mt-14" aria-labelledby="h-relacionados">
+          <div class="flex flex-wrap items-end justify-between gap-3">
+            <h2 id="h-relacionados" class="font-display text-2xl font-extrabold">Artículos relacionados</h2>
+            <a href="index.html?cat=modelos-llm#publicaciones" class="text-sm font-semibold text-iris-300 hover:text-iris-400">Explorar categoría Modelos LLM →</a>
+          </div>
+          <div class="mt-6 grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
+            <article class="post-card group relative flex flex-col">
+              <div class="cover cover--modelos-llm " aria-hidden="true"><svg class="cover-icon" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/><path d="M10 10h4v4h-4z"/></svg></div>
+              <div class="mt-4 flex items-center gap-2 text-xs">
+                <span class="cat-dot--modelos-llm h-1.5 w-1.5 rounded-full"></span>
+                <span class="font-semibold uppercase tracking-wider text-mist-300">Modelos LLM</span>
+              </div>
+              <h3 class="post-title mt-2 font-display text-lg font-bold leading-snug transition">
+                <a href="articulo-base.html" class="after:absolute after:inset-0">Ventana de contexto: qué es y por qué importa al elegir un modelo</a>
+              </h3>
+              <p class="mt-2 line-clamp-2 text-sm text-mist-400">Tokens, límites y qué pasa cuando le das a la IA un PDF de 300 páginas.</p>
+              <p class="mt-3 text-xs text-mist-500"><time datetime="2026-10-07">7 de octubre de 2026</time> · 5 min de lectura</p>
+            </article>
+            <article class="post-card group relative flex flex-col">
+              <div class="cover cover--guias " aria-hidden="true"><svg class="cover-icon" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2zM12 6v14"/></svg></div>
+              <div class="mt-4 flex items-center gap-2 text-xs">
+                <span class="cat-dot--guias h-1.5 w-1.5 rounded-full"></span>
+                <span class="font-semibold uppercase tracking-wider text-mist-300">Guías</span>
+              </div>
+              <h3 class="post-title mt-2 font-display text-lg font-bold leading-snug transition">
+                <a href="guia-prompt-engineering.html" class="after:absolute after:inset-0">Guía completa de Prompt Engineering: cómo escribir instrucciones efectivas para la IA en 2026</a>
+              </h3>
+              <p class="mt-2 line-clamp-2 text-sm text-mist-400">La anatomía de un prompt profesional, las técnicas Few-Shot y Chain-of-Thought y los errores que más reducen la calidad de las respuestas.</p>
+              <p class="mt-3 text-xs text-mist-500"><time datetime="2026-10-12">12 de octubre de 2026</time> · 5 min de lectura</p>
+            </article>
+            <article class="post-card group relative flex flex-col">
+              <div class="cover cover--productividad " aria-hidden="true"><svg class="cover-icon" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+              <div class="mt-4 flex items-center gap-2 text-xs">
+                <span class="cat-dot--productividad h-1.5 w-1.5 rounded-full"></span>
+                <span class="font-semibold uppercase tracking-wider text-mist-300">Productividad</span>
+              </div>
+              <h3 class="post-title mt-2 font-display text-lg font-bold leading-snug transition">
+                <a href="ia-para-desarrolladores.html" class="after:absolute after:inset-0">IA para desarrolladores en 2026: cómo integrar asistentes de código en tu flujo de trabajo</a>
+              </h3>
+              <p class="mt-2 line-clamp-2 text-sm text-mist-400">Qué aportan los asistentes de código, cómo se comparan Copilot, Cursor, Claude Code y Amazon Q, y las buenas prácticas para no llevar errores a producción.</p>
+              <p class="mt-3 text-xs text-mist-500"><time datetime="2026-10-12">12 de octubre de 2026</time> · 5 min de lectura</p>
+            </article>
+          </div>
+        </section>
+      </article>
+
+      <!-- ============ SIDEBAR ============ -->
+      <aside class="flex flex-col gap-10" aria-label="Barra lateral del artículo">
+        <nav class="hidden rounded-2xl border border-ink-700 bg-ink-850 p-5 lg:block" aria-labelledby="h-toc">
+          <h2 id="h-toc" class="text-xs font-semibold uppercase tracking-wider text-iris-300">En este artículo</h2>
+          <ol class="toc mt-3 space-y-2 text-sm text-mist-300">
+              <li><a href="#que-es-un-llm" data-toc="que-es-un-llm">¿Qué es exactamente un Gran Modelo de Lenguaje (LLM)?</a></li>
+              <li><a href="#comparativa-modelos" data-toc="comparativa-modelos">Comparativa de los principales modelos del mercado</a></li>
+              <li><a href="#como-elegir" data-toc="como-elegir">Factores clave para elegir un LLM</a></li>
+              <li><a href="#agentes-ia" data-toc="agentes-ia">El futuro de los modelos: de chatbots a agentes autónomos</a></li>
+              <li><a href="#conclusion" data-toc="conclusion">Conclusión</a></li>
+          </ol>
+        </nav>
+        <section id="mas-leidos-art" class="scroll-mt-32 rounded-2xl border border-ink-700 bg-ink-850 p-5" aria-labelledby="h-mas-leidos-art">
+            <h2 id="h-mas-leidos-art" class="text-xs font-semibold uppercase tracking-wider text-iris-300">Más leídos</h2>
+            <!-- Ranking: actualízalo con las páginas más vistas de Analytics -->
+            <ol class="mt-4 space-y-4">
+            <li>
+              <a href="guia-prompt-engineering.html" class="group flex gap-3">
+                <span class="rank w-6 shrink-0 font-display text-2xl font-extrabold leading-none text-ink-600 group-hover:text-iris-400">1</span>
+                <span class="min-w-0">
+                  <span class="block text-sm font-semibold leading-snug text-mist-100 group-hover:text-iris-300">Guía completa de Prompt Engineering: cómo escribir instrucciones efectivas para la IA en 2026</span>
+                  <span class="mt-1 block text-xs text-mist-500">Guías · 5 min</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="que-es-la-ia-generativa.html" class="group flex gap-3">
+                <span class="rank w-6 shrink-0 font-display text-2xl font-extrabold leading-none text-ink-600 group-hover:text-iris-400">2</span>
+                <span class="min-w-0">
+                  <span class="block text-sm font-semibold leading-snug text-mist-100 group-hover:text-iris-300">¿Qué es la Inteligencia Artificial Generativa y cómo está cambiando el trabajo en 2026?</span>
+                  <span class="mt-1 block text-xs text-mist-500">Guías · 5 min</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="modelos-llm-explicados.html" class="group flex gap-3">
+                <span class="rank w-6 shrink-0 font-display text-2xl font-extrabold leading-none text-ink-600 group-hover:text-iris-400">3</span>
+                <span class="min-w-0">
+                  <span class="block text-sm font-semibold leading-snug text-mist-100 group-hover:text-iris-300">Modelos LLM explicados para principiantes: de GPT-4 a Claude</span>
+                  <span class="mt-1 block text-xs text-mist-500">Modelos LLM · 6 min</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="ia-para-desarrolladores.html" class="group flex gap-3">
+                <span class="rank w-6 shrink-0 font-display text-2xl font-extrabold leading-none text-ink-600 group-hover:text-iris-400">4</span>
+                <span class="min-w-0">
+                  <span class="block text-sm font-semibold leading-snug text-mist-100 group-hover:text-iris-300">IA para desarrolladores en 2026: cómo integrar asistentes de código en tu flujo de trabajo</span>
+                  <span class="mt-1 block text-xs text-mist-500">Productividad · 5 min</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="articulo-base.html" class="group flex gap-3">
+                <span class="rank w-6 shrink-0 font-display text-2xl font-extrabold leading-none text-ink-600 group-hover:text-iris-400">5</span>
+                <span class="min-w-0">
+                  <span class="block text-sm font-semibold leading-snug text-mist-100 group-hover:text-iris-300">Qué son los agentes de IA y en qué se diferencian de un chatbot</span>
+                  <span class="mt-1 block text-xs text-mist-500">Guías · 6 min</span>
+                </span>
+              </a>
+            </li>
+            </ol>
+          </section>
+        <!-- ANUNCIO · SIDEBAR 300x250 STICKY (solo ≥1024 px) · GAM: /1234567/iaradar/art_sidebar -->
+        <div class="sticky top-32 hidden lg:block">
+          <div class="ad-wrap " data-ad-wrap>
+              <span class="ad-label">Publicidad</span>
+              <div id="ad-art-sidebar" class="ad-box ad-box--mpu" data-ad-type="mpu" data-ad-unit="art_sidebar" role="complementary" aria-label="Anuncio">
+                <span class="ad-ph">300 × 250</span>
+              </div>
+            </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ============ NEWSLETTER ============ -->
+  <section id="newsletter" class="scroll-mt-32 px-4 py-16 sm:px-6" aria-labelledby="h-newsletter">
+    <div class="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-iris-500/30 bg-gradient-to-br from-ink-800 via-ink-850 to-ink-900 p-6 sm:p-10">
+      <div aria-hidden="true" class="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-iris-600/25 blur-3xl"></div>
+      <div class="relative grid items-center gap-8 md:grid-cols-2">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-iris-300">Newsletter semanal · gratis</p>
+          <h2 id="h-newsletter" class="mt-2 font-display text-3xl font-extrabold">Lo más importante de la IA, cada martes en tu correo</h2>
+          <ul class="mt-4 space-y-2 text-sm text-mist-300">
+            <li class="flex gap-2"><span class="text-emerald-400" aria-hidden="true">✓</span> Las guías y tutoriales nuevos de la semana</li>
+            <li class="flex gap-2"><span class="text-emerald-400" aria-hidden="true">✓</span> Un resumen de las noticias que de verdad importan</li>
+            <li class="flex gap-2"><span class="text-emerald-400" aria-hidden="true">✓</span> Un correo a la semana. Te das de baja con un clic.</li>
+          </ul>
+        </div>
+        <form id="newsletter-form" class="rounded-2xl border border-ink-700 bg-ink-900/70 p-5" novalidate>
+          <label for="nl-name" class="block text-sm font-medium text-mist-300">Nombre</label>
+          <input id="nl-name" name="nombre" type="text" autocomplete="given-name" placeholder="Laura"
+            class="mt-1 w-full rounded-lg border border-ink-700 bg-ink-850 px-3 py-2.5 text-sm placeholder:text-mist-500 focus:border-iris-500 focus:outline-none">
+          <label for="nl-email" class="mt-3 block text-sm font-medium text-mist-300">Correo electrónico</label>
+          <input id="nl-email" name="email" type="email" required autocomplete="email" placeholder="laura@empresa.com"
+            class="mt-1 w-full rounded-lg border border-ink-700 bg-ink-850 px-3 py-2.5 text-sm placeholder:text-mist-500 focus:border-iris-500 focus:outline-none">
+          <label class="mt-3 flex items-start gap-2 text-xs text-mist-400">
+            <input id="nl-consent" type="checkbox" required class="mt-0.5 h-4 w-4 rounded border-ink-600 bg-ink-850 accent-iris-500">
+            <span>Acepto la <a href="privacidad.html" class="underline">Política de Privacidad</a> y recibir la newsletter.</span>
+          </label>
+          <button type="submit" class="mt-4 w-full rounded-lg bg-gradient-to-r from-iris-600 to-azure-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110">Suscribirme</button>
+          <p id="nl-msg" class="mt-3 min-h-[1.25rem] text-sm" role="status" aria-live="polite"></p>
+          <p class="text-[11px] leading-relaxed text-mist-500">Responsable: IA Radar. Finalidad: envío de la newsletter. Puedes ejercer tus derechos de acceso, rectificación y supresión escribiendo a contacto@iaradar.com.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER GLOBAL ============ -->
+  <footer class="border-t border-ink-700 bg-ink-950">
+    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+      <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div>
+          <a href="index.html" class="font-display text-xl font-extrabold">IA <span class="text-iris-400">Radar</span></a>
+          <p class="mt-3 max-w-sm text-sm text-mist-400">Guías, análisis y noticias de inteligencia artificial y software para profesionales hispanohablantes.</p>
+          <p class="mt-4 text-sm text-mist-400">Escríbenos: <a href="mailto:contacto@iaradar.com" class="text-mist-200 underline underline-offset-2 hover:text-white">contacto@iaradar.com</a></p>
+        </div>
+        <nav aria-label="Enlaces del sitio">
+          <h2 class="text-sm font-semibold">IA Radar</h2>
+          <ul class="mt-3 space-y-2 text-sm text-mist-400">
+            <li><a href="index.html" class="hover:text-white">Inicio</a></li>
+            <li><a href="contacto.html#sobre-nosotros" class="hover:text-white">Sobre Nosotros</a></li>
+            <li><a href="contacto.html" class="hover:text-white">Contacto</a></li>
+            <li><a href="privacidad.html" class="hover:text-white">Política de Privacidad</a></li>
+            <li><a href="terminos.html" class="hover:text-white">Términos y Condiciones</a></li>
+            <li><a href="cookies.html" class="hover:text-white">Política de Cookies</a></li>
+            <li><button type="button" data-open-consent class="text-left hover:text-white">Configurar cookies</button></li>
+          </ul>
+        </nav>
+        <nav aria-label="Categorías del pie">
+          <h2 class="text-sm font-semibold">Categorías</h2>
+          <ul class="mt-3 space-y-2 text-sm text-mist-400">
+            <li><a href="index.html?cat=guias#publicaciones" data-cat="Guías" class="hover:text-white">Guías</a></li>
+            <li><a href="index.html?cat=modelos-llm#publicaciones" data-cat="Modelos LLM" class="hover:text-white">Modelos LLM</a></li>
+            <li><a href="index.html?cat=productividad#publicaciones" data-cat="Productividad" class="hover:text-white">Productividad</a></li>
+            <li><a href="index.html?cat=noticias#publicaciones" data-cat="Noticias" class="hover:text-white">Noticias</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <p class="mt-10 rounded-xl border border-ink-700 bg-ink-900 p-4 text-xs leading-relaxed text-mist-400">
+        IA Radar es un medio independiente que se financia con publicidad. Los anuncios los sirve Google, se identifican siempre con la etiqueta «Publicidad»
+        y no influyen en nuestros contenidos. Ninguna empresa paga por aparecer en nuestros artículos.
+      </p>
+      <div class="mt-8 flex flex-col gap-3 border-t border-ink-800 pt-6 text-xs text-mist-500 sm:flex-row sm:items-center sm:justify-between">
+        <p>© 2026 IA Radar. Todos los derechos reservados.</p>
+        <p class="flex flex-wrap gap-x-4 gap-y-1">
+          <a href="privacidad.html" class="hover:text-mist-300">Privacidad</a>
+          <a href="terminos.html" class="hover:text-mist-300">Términos</a>
+          <a href="cookies.html" class="hover:text-mist-300">Cookies</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ ANUNCIO ANCHOR INFERIOR (solo móvil) ============
+       GAM: /1234567/iaradar/anchor · 320x50. Se puede cerrar y no tapa contenido
+       (el body reserva su altura). Alternativa: formato nativo de GAM
+       googletag.enums.OutOfPageFormat.BOTTOM_ANCHOR. -->
+  <div id="ad-anchor-bar" class="ad-anchor" role="complementary" aria-label="Anuncio fijo inferior">
+    <div class="relative flex flex-col items-center gap-0.5">
+      <span class="ad-label" style="font-size:9px;line-height:10px">Publicidad</span>
+      <div id="ad-anchor" class="ad-box ad-box--anchor" data-ad-type="anchor" data-ad-unit="anchor"><span class="ad-ph">320 × 50</span></div>
+    </div>
+    <button type="button" id="ad-anchor-close" class="absolute -top-3 right-2 flex h-6 w-6 items-center justify-center rounded-full border border-ink-600 bg-ink-850 text-xs text-mist-300" aria-label="Cerrar anuncio">✕</button>
+  </div>
+
+  <!-- ============ BANNER DE COOKIES (CMP) ============
+       Rechazar tiene el mismo peso visual que Aceptar (requisito de la AEPD y del RGPD). -->
+  <div id="cmp" class="fixed inset-x-0 bottom-0 z-50 hidden px-3 pb-3" style="padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px))" role="dialog" aria-modal="false" aria-labelledby="cmp-title">
+    <div class="mx-auto max-w-3xl rounded-2xl border border-ink-600 bg-ink-850 p-5 shadow-2xl shadow-black/60">
+      <h2 id="cmp-title" class="font-display text-lg font-bold">Tu privacidad, tus reglas</h2>
+      <p class="mt-2 text-sm text-mist-300">
+        Usamos cookies propias y de terceros (Google) para que la web funcione, medir visitas y mostrar anuncios personalizados.
+        Puedes aceptarlas, rechazarlas o elegir cuáles. Más información en la <a href="cookies.html" class="underline">Política de Cookies</a>.
+      </p>
+
+      <div id="cmp-prefs" class="mt-4 hidden space-y-3 rounded-xl border border-ink-700 bg-ink-900 p-4 text-sm">
+        <label class="flex items-start justify-between gap-4">
+          <span><span class="font-semibold">Necesarias</span><span class="block text-xs text-mist-400">Imprescindibles para la web y para recordar tu elección.</span></span>
+          <input type="checkbox" checked disabled class="mt-1 h-4 w-4 accent-iris-500">
+        </label>
+        <label for="cmp-analytics" class="flex items-start justify-between gap-4">
+          <span><span class="font-semibold">Analítica</span><span class="block text-xs text-mist-400">Estadísticas anónimas de uso (Google Analytics).</span></span>
+          <input id="cmp-analytics" type="checkbox" class="mt-1 h-4 w-4 accent-iris-500">
+        </label>
+        <label for="cmp-ads" class="flex items-start justify-between gap-4">
+          <span><span class="font-semibold">Publicidad personalizada</span><span class="block text-xs text-mist-400">Anuncios según tus intereses. Si la rechazas verás anuncios sin cookies, menos relevantes.</span></span>
+          <input id="cmp-ads" type="checkbox" class="mt-1 h-4 w-4 accent-iris-500">
+        </label>
+      </div>
+
+      <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" id="cmp-config" class="rounded-lg px-4 py-2.5 text-sm font-semibold text-mist-300 underline-offset-4 hover:underline">Configurar</button>
+        <button type="button" id="cmp-save" class="hidden rounded-lg border border-ink-600 px-4 py-2.5 text-sm font-semibold hover:border-iris-400">Guardar selección</button>
+        <button type="button" id="cmp-reject" class="rounded-lg border border-iris-500 bg-iris-600 px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110">Rechazar todo</button>
+        <button type="button" id="cmp-accept" class="rounded-lg border border-iris-500 bg-iris-600 px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110">Aceptar todo</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ JAVASCRIPT ============ -->
+  <script>
+  (function () {
+    'use strict';
+
+    /* ==============================================================
+       GOOGLE AD MANAGER
+       Sustituye 1234567 por tu Network Code y crea en GAM los ad units
+       que aparecen en los atributos data-ad-unit del HTML.
+       Cada hueco publicitario es un elemento con:
+         data-ad-type="leaderboard | inarticle | sidebar | anchor"
+         data-ad-unit="nombre_del_ad_unit"
+       sizeMapping: [ancho mínimo de viewport, alto], [tamaños permitidos].
+       Un array vacío = no se pide anuncio en ese breakpoint.
+       ============================================================== */
+    var AD_NETWORK = '/1234567/iaradar';
+    var AD_TYPES = {
+      leaderboard: { sizes: [[728, 90], [320, 50]], map: [[[768, 0], [[728, 90]]], [[0, 0], [[320, 50]]]] },
+      inarticle:   { sizes: [[336, 280], [300, 250]], map: [[[768, 0], [[336, 280], [300, 250]]], [[0, 0], [[300, 250]]]] },
+      sidebar:     { sizes: [[300, 600], [300, 250]], map: [[[1024, 0], [[300, 600], [300, 250]]], [[0, 0], []]] },
+      mpu:         { sizes: [[300, 250]], map: [[[1024, 0], [[300, 250]]], [[0, 0], []]] },
+      anchor:      { sizes: [[320, 50]], map: [[[768, 0], []], [[0, 0], [[320, 50]]]] }
+    };
+    var HEADER_BIDDING = false; // true cuando añadas Prebid.js (ver loadAds)
+
+    var adsLoaded = false;
+    var adsReady = false;
+    var liveSlots = {}; // id del contenedor -> { slot, el }
+    var adSection = 'guias';
+
+    function isShown(el) { return el.isConnected && !el.closest('[hidden]'); }
+
+    /* Sincroniza los anuncios con lo que hay en pantalla:
+       - destruye los slots cuyo contenedor ya no existe (artículo anterior),
+       - define y muestra los nuevos,
+       - con refresh=true vuelve a pedir los visibles (cambio de página = nueva página vista). */
+    function syncAds(refresh) {
+      if (!adsReady) return;
+      googletag.cmd.push(function () {
+        var pubads = googletag.pubads();
+        var gone = [];
+        Object.keys(liveSlots).forEach(function (id) {
+          if (!liveSlots[id].el.isConnected || !liveSlots[id].el.hasAttribute('data-ad-type')) { gone.push(liveSlots[id].slot); delete liveSlots[id]; }
+        });
+        if (gone.length) googletag.destroySlots(gone);
+
+        pubads.setTargeting('seccion', adSection);
+        var toDisplay = [], toRefresh = [];
+        document.querySelectorAll('[data-ad-type]').forEach(function (el) {
+          if (!isShown(el)) return;
+          if (liveSlots[el.id]) { if (refresh) toRefresh.push(liveSlots[el.id].slot); return; }
+          var t = AD_TYPES[el.getAttribute('data-ad-type')];
+          var mb = googletag.sizeMapping();
+          t.map.forEach(function (m) { mb.addSize(m[0], m[1]); });
+          var slot = googletag.defineSlot(AD_NETWORK + '/' + el.getAttribute('data-ad-unit'), t.sizes, el.id);
+          if (!slot) return;
+          slot.defineSizeMapping(mb.build()).addService(pubads);
+          liveSlots[el.id] = { slot: slot, el: el };
+          toDisplay.push(el.id);
+        });
+        toDisplay.forEach(function (id) { googletag.display(id); });
+        if (toRefresh.length) pubads.refresh(toRefresh);
+      });
+    }
+
+    function loadAds(personalized) {
+      if (adsLoaded || !document.querySelector('[data-ad-type]')) return;
+      adsLoaded = true;
+
+      // Anchor móvil: solo en pantallas < 768 px y si el usuario no lo cerró en esta sesión
+      if (document.getElementById('ad-anchor') && window.matchMedia('(max-width: 767px)').matches && !sessionGet('iaradar-anchor-closed')) {
+        document.body.classList.add('has-anchor');
+      }
+
+      var s = document.createElement('script');
+      s.async = true;
+      s.crossOrigin = 'anonymous';
+      s.src = 'https://securepubads.g.doubleclick.net/tag/js/gpt.js';
+      document.head.appendChild(s);
+
+      googletag.cmd.push(function () {
+        var pubads = googletag.pubads();
+        // Sin consentimiento de publicidad: anuncios limitados (sin cookies ni identificadores)
+        pubads.setPrivacySettings({ limitedAds: !personalized, nonPersonalizedAds: !personalized });
+        // No colapsar los huecos vacíos: el espacio ya está reservado y colapsarlo provocaría CLS
+        pubads.enableSingleRequest();
+        pubads.enableLazyLoad({ fetchMarginPercent: 200, renderMarginPercent: 100, mobileScaling: 2.0 });
+        pubads.addEventListener('slotRenderEnded', function (e) {
+          var el = document.getElementById(e.slot.getSlotElementId());
+          var wrap = el && el.closest('[data-ad-wrap], .ad-anchor');
+          if (wrap) wrap.classList.toggle('is-filled', !e.isEmpty);
+        });
+
+        /* HEADER BIDDING (Prebid.js): carga prebid.js, define pbjs.adUnits con los
+           mismos ids y, si HEADER_BIDDING es true, haz:
+             pubads.disableInitialLoad();
+             pbjs.que.push(function () {
+               pbjs.requestBids({ timeout: 1000, bidsBackHandler: function () {
+                 pbjs.setTargetingForGPTAsync(); pubads.refresh();
+               }});
+             });
+           Mantén un timeout de 1.000–1.500 ms para no penalizar el LCP. */
+        if (HEADER_BIDDING) pubads.disableInitialLoad();
+
+        googletag.enableServices();
+      });
+      adsReady = true;
+      syncAds(false);
+    }
+
+    // Cerrar anchor (no se vuelve a pedir en esta sesión)
+    var $anchorClose = document.getElementById('ad-anchor-close');
+    if ($anchorClose) $anchorClose.addEventListener('click', function () {
+      document.body.classList.remove('has-anchor');
+      document.getElementById('ad-anchor').removeAttribute('data-ad-type');
+      sessionSet('iaradar-anchor-closed', '1');
+      syncAds(false);
+    });
+
+    /* ==============================================================
+       CONSENTIMIENTO (CMP)
+       ============================================================== */
+    var CONSENT_KEY = 'iaradar-consent-v1';
+    function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+    function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+    function sessionGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+    function sessionSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
+
+    var $cmp = document.getElementById('cmp');
+    var $prefs = document.getElementById('cmp-prefs');
+    var $save = document.getElementById('cmp-save');
+    var $config = document.getElementById('cmp-config');
+
+    function applyConsent(c) {
+      gtag('consent', 'update', {
+        ad_storage: c.ads ? 'granted' : 'denied',
+        ad_user_data: c.ads ? 'granted' : 'denied',
+        ad_personalization: c.ads ? 'granted' : 'denied',
+        analytics_storage: c.analytics ? 'granted' : 'denied'
+      });
+      if (adsLoaded) {
+        // Si cambia la elección tras cargar los anuncios, se aplica en la siguiente carga de página
+        googletag.cmd.push(function () { googletag.pubads().setPrivacySettings({ limitedAds: !c.ads, nonPersonalizedAds: !c.ads }); });
+      }
+      loadAds(c.ads);
+    }
+
+    function saveConsent(analytics, ads) {
+      var c = { analytics: analytics, ads: ads, ts: Date.now() };
+      storeSet(CONSENT_KEY, c);
+      closeCmp();
+      applyConsent(c);
+    }
+
+    function openCmp(showPrefs) {
+      var c = storeGet(CONSENT_KEY) || {};
+      document.getElementById('cmp-analytics').checked = !!c.analytics;
+      document.getElementById('cmp-ads').checked = !!c.ads;
+      togglePrefs(!!showPrefs);
+      $cmp.classList.remove('hidden');
+      document.body.classList.add('cmp-open');
+    }
+    function closeCmp() { $cmp.classList.add('hidden'); document.body.classList.remove('cmp-open'); }
+    function togglePrefs(show) {
+      $prefs.classList.toggle('hidden', !show);
+      $save.classList.toggle('hidden', !show);
+      $config.classList.toggle('hidden', show);
+    }
+
+    document.getElementById('cmp-accept').addEventListener('click', function () { saveConsent(true, true); });
+    document.getElementById('cmp-reject').addEventListener('click', function () { saveConsent(false, false); });
+    $config.addEventListener('click', function () { togglePrefs(true); });
+    $save.addEventListener('click', function () {
+      saveConsent(document.getElementById('cmp-analytics').checked, document.getElementById('cmp-ads').checked);
+    });
+    document.querySelectorAll('[data-open-consent]').forEach(function (b) {
+      b.addEventListener('click', function () { openCmp(true); });
+    });
+
+
+
+    /* ==============================================================
+       MENÚ MÓVIL Y NEWSLETTER
+       ============================================================== */
+    var $menuBtn = document.getElementById('menu-btn');
+    var $menu = document.getElementById('mobile-menu');
+    function closeMenu() { $menu.classList.add('hidden'); $menuBtn.setAttribute('aria-expanded', 'false'); }
+    $menuBtn.addEventListener('click', function () {
+      var open = $menu.classList.toggle('hidden') === false;
+      $menuBtn.setAttribute('aria-expanded', String(open));
+    });
+    $menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', closeMenu); });
+
+    // Newsletter: validación en cliente. Conecta aquí tu proveedor (Mailchimp, Brevo, MailerLite…)
+    var $form = document.getElementById('newsletter-form');
+    var $msg = document.getElementById('nl-msg');
+    if ($form) $form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = document.getElementById('nl-email').value.trim();
+      var ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+      if (!ok) { $msg.className = 'mt-3 min-h-[1.25rem] text-sm text-rose-400'; $msg.textContent = 'Escribe un correo válido, por ejemplo nombre@empresa.com.'; return; }
+      if (!document.getElementById('nl-consent').checked) { $msg.className = 'mt-3 min-h-[1.25rem] text-sm text-rose-400'; $msg.textContent = 'Marca la casilla de privacidad para suscribirte.'; return; }
+      // fetch('https://tu-proveedor/api/subscribe', { method: 'POST', body: new FormData($form) })
+      gtag('event', 'newsletter_signup', { location: location.pathname });
+      $msg.className = 'mt-3 min-h-[1.25rem] text-sm text-emerald-400';
+      $msg.textContent = '¡Listo! Revisa tu bandeja de entrada para confirmar la suscripción.';
+      $form.reset();
+    });
+
+    /* ==============================================================
+       ARTÍCULO: índice activo y medición de lectura
+       ============================================================== */
+    var heads = Array.prototype.slice.call(document.querySelectorAll('.prose-ia h2[id]'));
+    if (window.IntersectionObserver) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          document.querySelectorAll('[data-toc]').forEach(function (l) { l.classList.toggle('is-active', l.getAttribute('data-toc') === en.target.id); });
+        });
+      }, { rootMargin: '-20% 0px -70% 0px' });
+      heads.forEach(function (h) { io.observe(h); });
+    }
+    // Evento de lectura completa (GA4) al llegar al final del texto
+    var $end = document.querySelector('.prose-ia > :last-child');
+    if ($end && window.IntersectionObserver) {
+      var seen = false;
+      new IntersectionObserver(function (en) {
+        if (!seen && en[0].isIntersecting) { seen = true; gtag('event', 'article_read', { article: document.title }); }
+      }).observe($end);
+    }
+
+    // Consentimiento caduca a los 12 meses (recomendación de la AEPD: máx. 24)
+    var saved = storeGet(CONSENT_KEY);
+    if (saved && Date.now() - saved.ts < 365 * 24 * 3600 * 1000) applyConsent(saved);
+    else openCmp(false);
+  })();
+  </script>
+</body>
+</html>
